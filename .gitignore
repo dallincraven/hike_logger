@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+# Poetry
+poetry.lock
+# Virtual environments (if not using Poetry's built-in venv mgmt)
+.venv/
+venv/
+# Environment variables
+.env
+# Flask instance folder (holds local SQLite DB, config)
+instance/
+*.db
+*.sqlite
+# System files
+.DS_Store
+Thumbs.db
+# IDE files
+.vscode/
+.idea/
+# Logs
+*.log
