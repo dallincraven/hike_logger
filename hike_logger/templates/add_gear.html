@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Add Gear</title>
+    </head>
+    <body>
+        <h1>Add New Gear</h1>
+        <form method="POST">
+            <label>Name:</label><br>
+            <input type="text" name="name" required><br><br>
+            <label>Category:</label><br>
+            <input type="text" name="category" required><br><br>
+            <label>Weight in Grams:</label><br>
+            <input type="number" name="weight_grams"><br><br>
+            <label>Notes:</label><br>
+            <textarea name="notes"></textarea><br><br>
+            <button type="submit">Save Gear</button>
+        </form>
+        <br>
+        <a href="{{ url_for('main.index') }}">Back to Trips</a>
+    </body>
+</html>
