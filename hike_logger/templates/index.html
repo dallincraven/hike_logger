@@ -2,11 +2,13 @@
 <html>
     <head>
         <title>My Trips</title>
+        <link rel="stylesheet" href={{ url_for('static', filename='css/style.css') }}>
+
     </head>
     <body>
+        <div class="container">
         <h1>Hiking Trips</h1>
         <a href="{{ url_for('main.add_trip') }}">Add new trip</a><br><br>
-        <a href="{{ url_for('main.add_gear') }}">Add new gear</a>
         <ul>
             {% for trip in trips %}
             <li>
@@ -29,6 +31,7 @@
             <li> No gear logged yet.</li>
             {% endfor %}
         </ul>
+        </div>
 
     </body>
 </html>
