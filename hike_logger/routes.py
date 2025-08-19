@@ -9,7 +9,8 @@ main = Blueprint('main', __name__)
 @main.route("/")
 def index():
     trips = Trip.query.order_by(Trip.date.desc()).all()
-    return render_template('index.html', trips=trips)
+    gear = Gear.query.order_by(Gear.name).all()
+    return render_template('index.html', trips=trips, gear=gear)
 
 @main.route("/add_trip", methods=["GET", "POST"])
 def add_trip():
@@ -41,3 +42,27 @@ def add_trip():
 
         return redirect(url_for("main.index"))
     return render_template("add_trip.html")
+
+@main.route("/add_gear", methods=["GET","POST"])
+def add_gear():
+    if request.method == "POST":
+        name = request.form.get("name")
+        category = request.form.get("category")
+        weight_grams = request.form.get("weight_grams")
+        notes = request.form.get("notes")
+
+        weight_grams = int(weight_grams) if weight_grams else None
+
+        new_gear = Gear(
+            name=name,
+            category=category,
+            weight_grams=weight_grams,
+            notes=notes
+        )
+
+        db.session.add(new_gear)
+        db.session.commit()
+
+        return redirect(url_for("main.index"))
+    return render_template("add_gear.html")
+
