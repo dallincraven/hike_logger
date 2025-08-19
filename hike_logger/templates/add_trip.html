@@ -25,6 +25,20 @@
         <button type="submit">Save Trip</button>
     </form>
     <br>
+    <h1>Gear Section</h1>
+    <h4>If you'd like to track gear you wore and make notes, here is where you'd do it</h4>
+    <form method="POST">
+        <label>Item</label><br>
+        <input type="text" name="Item"><br><br>
+        <label>Category</label><br>
+        <input type="text" name="Category"><br><br>
+        <label>Weight in Grams</label><br>
+        <input type="number" name="Weight"><br><br>
+        <label>What worked and what didn't:</label><br>
+        <textarea name="gear_notes"></textarea><br><br>
+        <button type="submit">Save Gear</button>
+    </form>
+
     <a href="{{ url_for('main.index') }}">Back to Trips</a>
     </div>
 </body>
