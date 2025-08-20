@@ -8,6 +8,8 @@ main = Blueprint('main', __name__)
 
 @main.route("/")
 def index():
+    if not db.session.query(Trip).first():
+        return redirect(url_for("main.add_trip"))
     trips = Trip.query.order_by(Trip.date.desc()).all()
     gear = Gear.query.order_by(Gear.name).all()
     return render_template('index.html', trips=trips, gear=gear)
