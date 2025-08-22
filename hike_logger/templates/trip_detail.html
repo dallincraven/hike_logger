@@ -68,9 +68,14 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="card-title mb-0">Gear Used</h4>
-                    {% if gear_used %}
-                        <span class="badge bg-primary">{{ gear_used|length }} items</span>
-                    {% endif %}
+                    <div>
+                        {% if gear_used %}
+                            <span class="badge bg-primary me-2">{{ gear_used|length }} items</span>
+                            <a href="{{ url_for('main.review_gear', trip_id=trip.id) }}" class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-star me-1"></i>Review Performance
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="card-body">
                     {% if gear_used %}
@@ -84,16 +89,77 @@
                             <div class="mb-3">
                                 <h6 class="text-primary border-bottom pb-1">{{ category }}</h6>
                                 {% for item in items %}
-                                    <div class="d-flex justify-content-between align-items-center py-1">
-                                        <div>
-                                            <strong>{{ item.name }}</strong>
+                                    <!-- Find the TripGear record to get performance data -->
+                                    {% set trip_gear_record = None %}
+                                    {% for tg in trip.gear_items %}
+                                        {% if tg.gear_id == item.id %}
+                                            {% set trip_gear_record = tg %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center">
+                                                <strong>{{ item.name }}</strong>
+                                                {% if item.weight_grams %}
+                                                    <span class="badge bg-secondary ms-2">{{ item.weight_grams }}g</span>
+                                                {% endif %}
+                                                
+                                                <!-- Performance Rating Display -->
+                                                {% if trip_gear_record and trip_gear_record.overall_rating %}
+                                                    <div class="ms-3">
+                                                        {% for i in range(1, 6) %}
+                                                            {% if i <= trip_gear_record.overall_rating %}
+                                                                <i class="fas fa-star text-warning"></i>
+                                                            {% else %}
+                                                                <i class="far fa-star text-muted"></i>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                        <small class="text-muted ms-1">({{ trip_gear_record.overall_rating }}/5)</small>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
                                             {% if item.notes %}
-                                                <br><small class="text-muted">{{ item.notes }}</small>
+                                                <small class="text-muted d-block">{{ item.notes }}</small>
+                                            {% endif %}
+                                            
+                                            <!-- Performance Notes -->
+                                            {% if trip_gear_record and trip_gear_record.performance_notes %}
+                                                <small class="text-info d-block mt-1">
+                                                    <i class="fas fa-comment me-1"></i>{{ trip_gear_record.performance_notes }}
+                                                </small>
+                                            {% endif %}
+                                            
+                                            <!-- Issues Flag -->
+                                            {% if trip_gear_record and trip_gear_record.had_issues %}
+                                                <small class="text-danger d-block">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>Had issues
+                                                    {% if trip_gear_record.issue_description %}
+                                                        - {{ trip_gear_record.issue_description }}
+                                                    {% endif %}
+                                                </small>
+                                            {% endif %}
+                                            
+                                            <!-- Would Bring Again -->
+                                            {% if trip_gear_record and trip_gear_record.would_bring_again is not none %}
+                                                <small class="{% if trip_gear_record.would_bring_again %}text-success{% else %}text-warning{% endif %} d-block">
+                                                    {% if trip_gear_record.would_bring_again %}
+                                                        <i class="fas fa-check-circle me-1"></i>Would bring again
+                                                    {% else %}
+                                                        <i class="fas fa-times-circle me-1"></i>Would not bring again
+                                                    {% endif %}
+                                                </small>
                                             {% endif %}
                                         </div>
-                                        {% if item.weight_grams %}
-                                            <span class="badge bg-secondary">{{ item.weight_grams }}g</span>
-                                        {% endif %}
+                                        
+                                        <!-- Gear Performance Link -->
+                                        <div>
+                                            <a href="{{ url_for('main.gear_performance_history', gear_id=item.id) }}" 
+                                               class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-chart-line me-1"></i>History
+                                            </a>
+                                        </div>
                                     </div>
                                 {% endfor %}
                             </div>

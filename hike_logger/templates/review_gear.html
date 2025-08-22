@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}{{ gear.name }} Performance History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1>{{ gear.name }}</h1>
+                    <p class="text-muted mb-0">{{ gear.category }} 
+                        {% if gear.weight_grams %}
+                            • {{ gear.weight_grams }}g
+                        {% endif %}
+                        {% if gear.average_rating() %}
+                            • Average Rating: 
+                            {% for i in range(1, 6) %}
+                                {% if i <= gear.average_rating() %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="far fa-star text-muted"></i>
+                                {% endif %}
+                            {% endfor %}
+                            ({{ gear.average_rating() }}/5)
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back to Trips</a>
+            </div>
+        </div>
+    </div>
+    
+    {% if performances %}
+        <div class="row">
+            <div class="col-12">
+                <h3 class="mb-3">Performance History</h3>
+                
+                {% for trip_gear, trip in performances %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <h5 class="card-title">
+                                    <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}" class="text-decoration-none">
+                                        {{ trip.name }}
+                                    </a>
+                                </h5>
+                                <small class="text-muted">{{ trip.date.strftime('%b %d, %Y') }}</small>
+                                {% if trip.location %}
+                                    <br><small class="text-muted">{{ trip.location }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <!-- Ratings Display -->
+                                {% if trip_gear.overall_rating %}
+                                    <div class="mb-2">
+                                        <strong>Overall:</strong>
+                                        {% for i in range(1, 6) %}
+                                            {% if i <= trip_gear.overall_rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="row">
+                                    {% if trip_gear.comfort_rating %}
+                                    <div class="col-6">
+                                        <small><strong>Comfort:</strong> {{ trip_gear.comfort_rating }}/5</small>
+                                    </div>
+                                    {% endif %}
+                                    {% if trip_gear.durability_rating %}
+                                    <div class="col-6">
+                                        <small><strong>Durability:</strong> {{ trip_gear.durability_rating }}/5</small>
+                                    </div>
+                                    {% endif %}
+                                    {% if trip_gear.weather_performance %}
+                                    <div class="col-6">
+                                        <small><strong>Weather:</strong> {{ trip_gear.weather_performance }}/5</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if trip_gear.performance_notes %}
+                                    <p class="text-muted mt-2 mb-0">{{ trip_gear.performance_notes }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 text-end">
+                                <!-- Status Indicators -->
+                                {% if trip_gear.would_bring_again is not none %}
+                                    <div class="mb-2">
+                                        {% if trip_gear.would_bring_again %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Would bring again
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-times me-1"></i>Would not bring again
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if trip_gear.had_issues %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Had Issues
+                                        </span>
+                                    </div>
+                                    {% if trip_gear.issue_description %}
+                                        <small class="text-danger">{{ trip_gear.issue_description }}</small>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                <!-- Trip Conditions -->
+                                {% if trip.weather %}
+                                    <div class="mt-2">
+                                        <small class="badge bg-info">{{ trip.weather }}</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Performance Summary -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title">Performance Summary</h5>
+                        <div class="row text-center">
+                            <div class="col-md-2">
+                                <h4 class="text-primary">{{ performances|length }}</h4>
+                                <small class="text-muted">Total Uses</small>
+                            </div>
+                            {% if gear.average_rating() %}
+                            <div class="col-md-2">
+                                <h4 class="text-success">{{ gear.average_rating() }}/5</h4>
+                                <small class="text-muted">Avg Rating</small>
+                            </div>
+                            {% endif %}
+                            {% set issues_count = performances|selectattr('0.had_issues')|list|length %}
+                            <div class="col-md-2">
+                                <h4 class="{% if issues_count > 0 %}text-warning{% else %}text-success{% endif %}">{{ issues_count }}</h4>
+                                <small class="text-muted">Issues Reported</small>
+                            </div>
+                            {% set would_bring_again_count = performances|selectattr('0.would_bring_again')|list|length %}
+                            <div class="col-md-2">
+                                <h4 class="text-info">{{ would_bring_again_count }}</h4>
+                                <small class="text-muted">Would Bring Again</small>
+                            </div>
+                            {% set comfort_ratings = performances|selectattr('0.comfort_rating')|map(attribute='0.comfort_rating')|list %}
+                            {% if comfort_ratings %}
+                            <div class="col-md-2">
+                                <h4 class="text-secondary">{{ "%.1f"|format(comfort_ratings|sum / comfort_ratings|length) }}</h4>
+                                <small class="text-muted">Avg Comfort</small>
+                            </div>
+                            {% endif %}
+                            {% set durability_ratings = performances|selectattr('0.durability_rating')|map(attribute='0.durability_rating')|list %}
+                            {% if durability_ratings %}
+                            <div class="col-md-2">
+                                <h4 class="text-warning">{{ "%.1f"|format(durability_ratings|sum / durability_ratings|length) }}</h4>
+                                <small class="text-muted">Avg Durability</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-chart-line fa-4x text-muted"></i>
+            </div>
+            <h3 class="text-muted">No performance data yet</h3>
+            <p class="text-muted mb-4">This gear hasn't been reviewed on any trips yet.</p>
+            <a href="{{ url_for('main.add_trip') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Add a Trip
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
