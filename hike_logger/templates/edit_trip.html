@@ -6,24 +6,24 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="mb-0">Add New Trip</h2>
+                    <h2 class="mb-0">Edit Trip: {{ trip.name }}</h2>
                 </div>
                 <div class="card-body">
                     <form method="POST">
                         <!-- Basic Trip Info -->
                         <div class="form-group mb-3">
                             <label for="name" class="form-label">Trip Name:</label>
-                            <input type="text" id="name" name="name" required class="form-control" placeholder="e.g., Mount Washington Summit">
+                            <input type="text" id="name" name="name" required class="form-control" value="{{ trip.name }}">
                         </div>
 
                         <div class="form-group mb-3">
                             <label for="date" class="form-label">Date:</label>
-                            <input type="date" id="date" name="date" required class="form-control">
+                            <input type="date" id="date" name="date" required class="form-control" value="{{ trip.date }}">
                         </div>
 
                         <div class="form-group mb-3">
                             <label for="location" class="form-label">Location:</label>
-                            <input type="text" id="location" name="location" class="form-control" placeholder="e.g., White Mountains, NH">
+                            <input type="text" id="location" name="location" class="form-control" value="{{ trip.location or '' }}">
                         </div>
 
                         <!-- Trip Stats -->
@@ -31,25 +31,25 @@
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="distance_km" class="form-label">Distance (km):</label>
-                                    <input type="number" step="0.1" id="distance_km" name="distance_km" class="form-control" placeholder="e.g., 12.5">
+                                    <input type="number" step="0.1" id="distance_km" name="distance_km" class="form-control" value="{{ trip.distance_km or '' }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label for="elevation_gain_m" class="form-label">Elevation Gain (m):</label>
-                                    <input type="number" id="elevation_gain_m" name="elevation_gain_m" class="form-control" placeholder="e.g., 1200">
+                                    <input type="number" id="elevation_gain_m" name="elevation_gain_m" class="form-control" value="{{ trip.elevation_gain_m or '' }}">
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group mb-3">
                             <label for="weather" class="form-label">Weather:</label>
-                            <input type="text" id="weather" name="weather" class="form-control" placeholder="e.g., Sunny, 15°C">
+                            <input type="text" id="weather" name="weather" class="form-control" value="{{ trip.weather or '' }}">
                         </div>
 
                         <div class="form-group mb-3">
                             <label for="notes" class="form-label">Notes:</label>
-                            <textarea id="notes" name="notes" rows="4" class="form-control" placeholder="Trip notes, conditions, highlights..."></textarea>
+                            <textarea id="notes" name="notes" rows="4" class="form-control">{{ trip.notes or '' }}</textarea>
                         </div>
 
                         <!-- Gear Selection Section -->
@@ -73,7 +73,8 @@
                                             {% for item in items %}
                                                 <div class="form-check mb-1">
                                                     <input type="checkbox" class="form-check-input" id="gear_{{ item.id }}" 
-                                                           name="gear_ids" value="{{ item.id }}">
+                                                           name="gear_ids" value="{{ item.id }}"
+                                                           {% if item.id in current_gear_ids %}checked{% endif %}>
                                                     <label class="form-check-label" for="gear_{{ item.id }}">
                                                         <strong>{{ item.name }}</strong>
                                                         {% if item.weight_grams %}
@@ -95,8 +96,8 @@
 
                         <!-- Form Actions -->
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ url_for('main.index') }}" class="btn btn-secondary me-md-2">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Add Trip</button>
+                            <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}" class="btn btn-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Update Trip</button>
                         </div>
                     </form>
                 </div>
@@ -104,16 +105,4 @@
         </div>
     </div>
 </div>
-
-<script>
-// Add some JavaScript for better UX
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-set today's date
-    const dateInput = document.getElementById('date');
-    if (!dateInput.value) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-    }
-});
-</script>
 {% endblock %}

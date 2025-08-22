@@ -24,6 +24,9 @@ def add_trip():
         elevation_gain_m = request.form.get("elevation_gain_m")
         weather = request.form.get("weather")
         notes = request.form.get("notes")
+        
+        # Get selected gear IDs
+        selected_gear_ids = request.form.getlist("gear_ids")
 
         date = datetime.strptime(date_str, "%Y-%m-%d").date()
         distance_km = float(distance_km) if distance_km else None
@@ -40,10 +43,20 @@ def add_trip():
         )
 
         db.session.add(new_trip)
-        db.session.commit()
+        db.session.flush()  # This gets the ID without committing
 
+        # Add gear associations
+        for gear_id in selected_gear_ids:
+            if gear_id:  # Make sure it's not empty
+                trip_gear = TripGear(trip_id=new_trip.id, gear_id=int(gear_id))
+                db.session.add(trip_gear)
+
+        db.session.commit()
         return redirect(url_for("main.index"))
-    return render_template("add_trip.html")
+    
+    # For GET request, pass all gear to template
+    gear = Gear.query.order_by(Gear.category, Gear.name).all()
+    return render_template("add_trip.html", gear=gear)
 
 @main.route("/add_gear", methods=["GET","POST"])
 def add_gear():
@@ -68,3 +81,49 @@ def add_gear():
         return redirect(url_for("main.index"))
     return render_template("add_gear.html")
 
+@main.route("/trip/<int:trip_id>")
+def trip_detail(trip_id):
+    trip = Trip.query.get_or_404(trip_id)
+    
+    # Get all gear used on this trip
+    gear_used = db.session.query(Gear).join(TripGear).filter(TripGear.trip_id == trip_id).all()
+    
+    # Calculate total weight if you want
+    total_weight = sum(gear.weight_grams for gear in gear_used if gear.weight_grams)
+    
+    return render_template('trip_detail.html', trip=trip, gear_used=gear_used, total_weight=total_weight)
+
+@main.route("/edit_trip/<int:trip_id>", methods=["GET", "POST"])
+def edit_trip(trip_id):
+    trip = Trip.query.get_or_404(trip_id)
+    
+    if request.method == "POST":
+        # Update trip details
+        trip.name = request.form.get("name")
+        trip.location = request.form.get("location")
+        trip.date = datetime.strptime(request.form.get("date"), "%Y-%m-%d").date()
+        trip.distance_km = float(request.form.get("distance_km")) if request.form.get("distance_km") else None
+        trip.elevation_gain_m = int(request.form.get("elevation_gain_m")) if request.form.get("elevation_gain_m") else None
+        trip.weather = request.form.get("weather")
+        trip.notes = request.form.get("notes")
+        
+        # Update gear associations
+        selected_gear_ids = request.form.getlist("gear_ids")
+        
+        # Remove existing gear associations
+        TripGear.query.filter_by(trip_id=trip_id).delete()
+        
+        # Add new gear associations
+        for gear_id in selected_gear_ids:
+            if gear_id:
+                trip_gear = TripGear(trip_id=trip_id, gear_id=int(gear_id))
+                db.session.add(trip_gear)
+        
+        db.session.commit()
+        return redirect(url_for("main.trip_detail", trip_id=trip_id))
+    
+    # For GET request
+    gear = Gear.query.order_by(Gear.category, Gear.name).all()
+    current_gear_ids = [tg.gear_id for tg in trip.gear_items]
+    
+    return render_template("edit_trip.html", trip=trip, gear=gear, current_gear_ids=current_gear_ids)

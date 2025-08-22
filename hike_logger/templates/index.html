@@ -1,37 +1,254 @@
-<!doctype html>
-<html>
-    <head>
-        <title>My Trips</title>
-        <link rel="stylesheet" href={{ url_for('static', filename='css/style.css') }}>
+{% extends "base.html" %}
 
-    </head>
-    <body>
-        <div class="container">
-        <h1>Hiking Trips</h1>
-        <a href="{{ url_for('main.add_trip') }}">Add new trip</a><br><br>
-        <ul>
-            {% for trip in trips %}
-            <li>
-                <strong>{{ trip.name }}</strong> - {{ trip.date }} at {{ trip.location }}
-                ({{ trip.distance_km or "?" }} km, {{ trip.elevation_gain_m or "?" }} m gain)
-            </li>
-            {% else %}
-            <li> No trips logged yet.</li>
-            {% endfor %}
-        </ul><br><br>
-        <h1>Gear</h1>
-        <a href="{{ url_for('main.add_gear') }}">Add new gear</a>
-        <ul>
-            {% for item in gear %}
-            <li>
-                <strong>{{ item.name }}</strong> - {{ item.category }} -- {{ item.weight_grams or "?" }}g
-                ({{ item.notes or "?" }})
-            </li>
-            {% else %}
-            <li> No gear logged yet.</li>
-            {% endfor %}
-        </ul>
+{% block title %}My Hiking Trips - Hike Logger{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-0">
+                    <i class="fas fa-mountain text-success me-2"></i>My Hiking Adventures
+                </h1>
+                <p class="text-muted mb-0">Track your trails, gear, and memories</p>
+            </div>
+            <div>
+                <a href="{{ url_for('main.add_trip') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i>Add New Trip
+                </a>
+            </div>
         </div>
+    </div>
+</div>
 
-    </body>
-</html>
+<!-- Quick Stats -->
+{% if trips %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h3 class="text-primary mb-0">{{ trips|length }}</h3>
+                        <small class="text-muted">Total Trips</small>
+                    </div>
+                    <div class="col-md-3">
+                        {% set total_distance = trips|sum(attribute='distance_km') %}
+                        <h3 class="text-success mb-0">{{ "%.1f"|format(total_distance or 0) }}</h3>
+                        <small class="text-muted">Total Distance (km)</small>
+                    </div>
+                    <div class="col-md-3">
+                        {% set total_elevation = trips|sum(attribute='elevation_gain_m') %}
+                        <h3 class="text-warning mb-0">{{ total_elevation or 0 }}</h3>
+                        <small class="text-muted">Total Elevation (m)</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 class="text-info mb-0">{{ gear|length }}</h3>
+                        <small class="text-muted">Gear Items</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Trips List -->
+<div class="row">
+    <div class="col-12">
+        {% if trips %}
+            <h3 class="mb-3">Recent Trips</h3>
+            
+            {% for trip in trips %}
+            <div class="card mb-3 hover-shadow">
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Trip Main Info -->
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">
+                                    <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}" class="text-decoration-none">
+                                        {{ trip.name }}
+                                    </a>
+                                </h5>
+                                <small class="text-muted">{{ trip.date.strftime('%b %d, %Y') }}</small>
+                            </div>
+                            
+                            {% if trip.location %}
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ trip.location }}
+                                </p>
+                            {% endif %}
+                            
+                            <!-- Trip Stats -->
+                            <div class="d-flex flex-wrap gap-3 mb-2">
+                                {% if trip.distance_km %}
+                                    <small class="badge bg-primary">
+                                        <i class="fas fa-route me-1"></i>{{ trip.distance_km }}km
+                                    </small>
+                                {% endif %}
+                                {% if trip.elevation_gain_m %}
+                                    <small class="badge bg-success">
+                                        <i class="fas fa-mountain me-1"></i>{{ trip.elevation_gain_m }}m ↑
+                                    </small>
+                                {% endif %}
+                                {% if trip.weather %}
+                                    <small class="badge bg-info">
+                                        <i class="fas fa-cloud-sun me-1"></i>{{ trip.weather }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                            
+                            {% if trip.notes %}
+                                <p class="card-text text-muted">
+                                    {{ trip.notes[:100] }}{% if trip.notes|length > 100 %}...{% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Gear Summary & Actions -->
+                        <div class="col-md-4">
+                            <div class="text-end">
+                                <!-- Gear Summary -->
+                                {% set gear_count = trip.gear_items|length %}
+                                {% if gear_count > 0 %}
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-end align-items-center mb-1">
+                                            <i class="fas fa-backpack text-muted me-2"></i>
+                                            <span class="badge bg-secondary">{{ gear_count }} items</span>
+                                        </div>
+                                        
+                                        <!-- Calculate total weight -->
+                                        {% set total_weight = 0 %}
+                                        {% for trip_gear in trip.gear_items %}
+                                            {% if trip_gear.gear.weight_grams %}
+                                                {% set total_weight = total_weight + trip_gear.gear.weight_grams %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if total_weight > 0 %}
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-weight-hanging me-1"></i>
+                                                {{ "%.1f"|format(total_weight/1000) }}kg pack weight
+                                            </small>
+                                        {% endif %}
+                                        
+                                        <!-- Show some gear categories -->
+                                        {% set categories = [] %}
+                                        {% for trip_gear in trip.gear_items[:3] %}
+                                            {% if trip_gear.gear.category not in categories %}
+                                                {% set _ = categories.append(trip_gear.gear.category) %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if categories %}
+                                            <div class="mt-1">
+                                                {% for category in categories %}
+                                                    <span class="badge bg-light text-dark me-1" style="font-size: 0.7em;">
+                                                        {{ category }}
+                                                    </span>
+                                                {% endfor %}
+                                                {% if trip.gear_items|length > 3 %}
+                                                    <span class="badge bg-light text-dark" style="font-size: 0.7em;">+more</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-backpack me-1"></i>No gear recorded
+                                        </small>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Action Buttons -->
+                                <div class="btn-group-vertical btn-group-sm">
+                                    <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </a>
+                                    <a href="{{ url_for('main.edit_trip', trip_id=trip.id) }}" 
+                                       class="btn btn-outline-secondary">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-mountain fa-4x text-muted"></i>
+                </div>
+                <h3 class="text-muted">No trips recorded yet</h3>
+                <p class="text-muted mb-4">Start tracking your hiking adventures!</p>
+                <a href="{{ url_for('main.add_trip') }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>Add Your First Trip
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Gear Quick View (Optional) -->
+{% if gear and trips %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-backpack me-2"></i>Your Gear Collection
+                </h5>
+                <a href="{{ url_for('main.add_gear') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i>Add Gear
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for item in gear[:8] %}  <!-- Show first 8 items -->
+                    <div class="col-md-3 mb-2">
+                        <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                            <div>
+                                <small class="fw-bold">{{ item.name }}</small>
+                                <br><small class="text-muted">{{ item.category }}</small>
+                            </div>
+                            {% if item.weight_grams %}
+                                <span class="badge bg-secondary">{{ item.weight_grams }}g</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if gear|length > 8 %}
+                    <div class="col-12 mt-2">
+                        <small class="text-muted">
+                            And {{ gear|length - 8 }} more items...
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.hover-shadow {
+    transition: box-shadow 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+.card-title a:hover {
+    color: #0056b3 !important;
+}
+</style>
+{% endblock %}
